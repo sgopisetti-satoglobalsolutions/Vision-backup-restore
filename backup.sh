@@ -130,6 +130,35 @@ data_backup() {
 	fi
 }
 
+initialize() {
+	if [ -z "$BACKUP_LOCATION" ];then
+		BACKUP_LOCATION=BACKUP_ROOT
+	fi
+	
+	BACKUP_MONGODB_PATH=$BACKUP_LOCATION/mongodb
+	if [ ! -d $BACKUP_MONGODB_PATH ]; then
+	 	mkdir -p $BACKUP_MONGODB_PATH
+	fi
+	
+	BACKUP_DATA_PATH=$BACKUP_LOCATION/data
+	if [ ! -d $BACKUP_DATA_PATH ]; then
+		mkdir -p $BACKUP_DATA_PATH
+	fi
+	
+	BACKUP_DATE_LOGS=$BACKUP_LOCATION/logs
+	if [ ! -d $BACKUP_DATE_LOGS ]; then
+		mkdir $BACKUP_DATE_LOGS
+	fi	
+	
+}
+
+
+# Run user root
+if [[ $(id -u) -ne 0 ]] ; then 
+	echo "Please run as root" ; 
+	exit 1 ; 
+fi
+
 # check configuration props exits under the run directory /opt/backups/bin/
 if [ ! -f "$BACKUP_CONFIG_FILE" ]; then
 	echo "Configuration file missing.."
@@ -185,33 +214,19 @@ do
 	fi
 	echo "$key $value" 
 done < "$BACKUP_CONFIG_FILE"
-if [ "$BACKUP_DB_ENABLED" = "FALSE" ] && [ "$BACKUP_IMAGES_ENABLED" = "FALSE" ]
-then
-    echo "Backup not enabled"
-    exit 0  
+
+if [ "$BACKUP_DB_ENABLED" != "TRUE" ]; then
+    if [ "$BACKUP_IMAGES_ENABLED" != "TRUE" ]; then
+		echo "Backup not enabled"
+		exit 0    	 
+    fi
 fi
 
-if [ -z "$BACKUP_LOCATION" ];then
-	BACKUP_LOCATION=BACKUP_ROOT
-fi
-
-BACKUP_MONGODB_PATH=$BACKUP_LOCATION/mongodb
-if [ ! -d $BACKUP_MONGODB_PATH ]; then
- 	mkdir -p $BACKUP_MONGODB_PATH
-fi
-
-BACKUP_DATA_PATH=$BACKUP_LOCATION/data
-if [ ! -d $BACKUP_DATA_PATH ]; then
-	mkdir -p $BACKUP_DATA_PATH
-fi
-
-BACKUP_DATE_LOGS=$BACKUP_LOCATION/logs
-if [ ! -d $BACKUP_DATE_LOGS ]; then
-	mkdir $BACKUP_DATE_LOGS
-fi
+initialize
 if [ "$BACKUP_DB_ENABLED" == "TRUE" ]; then
 	mongodb_backup
 fi
 if [ "$BACKUP_IMAGES_ENABLED" == "TRUE" ]; then
 	data_backup
 fi
+
