@@ -4,7 +4,7 @@
 # Global Variables
 ARGS=""
 VALUE=""
-
+ENTER="Enter "
 #####################################
 # Read required arguments
 #####################################
@@ -14,7 +14,7 @@ readvalue(){
 	VALUE=""
 	while [ $flag != 0 ]
 	do
-		echo "Enter $ARGS !"
+		echo "$ARGS "
 		read param
 		if [ -z "$param" ]; then
 			flag=1
@@ -177,7 +177,7 @@ start_replenishment() {
 #####################################
 mongodb_restore(){
 
-ARGS="mongodb username"
+ARGS="$ENTER mongodb username !"
 readvalue
 if [ -z "$VALUE" ]; then
     echo "Invalid $ARGS $VALUE. "
@@ -185,7 +185,7 @@ if [ -z "$VALUE" ]; then
 fi
 username=$VALUE
 
-ARGS="mongodb user $username password"
+ARGS="$ENTER mongodb user $username password !" 
 readvalue
 if [ -z "$VALUE" ]; then
     echo "Invalid $ARGS $VALUE. "
@@ -193,7 +193,7 @@ if [ -z "$VALUE" ]; then
 fi
 password=$VALUE
 
-ARGS="mongodb host"
+ARGS="$ENTER mongodb host !"
 readvalue
 if [ -z "$VALUE" ]; then
     echo "Invalid $ARGS $VALUE. "
@@ -202,7 +202,7 @@ fi
 host=$VALUE
 
 
-ARGS="mongodb port"
+ARGS="$ENTER mongodb port !"
 readvalue
 if [ -z "$VALUE" ]; then
     echo "Invalid $ARGS $VALUE. "
@@ -210,7 +210,7 @@ exit 0
 fi
 port=$VALUE
 
-ARGS="mongodb database"
+ARGS="$ENTER mongodb database !"
 readvalue
 if [ -z "$VALUE" ]; then
     echo "Invalid $ARGS $VALUE. "
@@ -219,21 +219,21 @@ fi
 database=$VALUE
 backup_path="/tmp"
 echo "---------------------------------------------"
-echo "Verify parameters and confirm y to continue !"
+echo "Verify parameters and confirm y(yes)/n(no) !"
 echo "mongodb username = $username"
 echo "password = $password"
 echo "host = $host"
 echo "database = $database"
 echo "---------------------------------------------"
-ARGS=" y to continue n to exit "
+ARGS="Do you want to continue y (Yes) / n (No) ?"
 readvalue
-if [ "$VALUE" = "n" ]; then
+if [ "$VALUE" != "y" ]; then
    echo "Mongodb restore process stopped by the user. "
    exit 0
 fi
-ARGS="Re-confirm y to continue n to exit "
+ARGS="Re-confirm y (Yes) / n (No)  !"
 readvalue
-if [ "$VALUE" = "n" ]; then
+if [ "$VALUE" != "y" ]; then
    echo "Mongodb restore process stopped by the user. "
    exit 0
 fi
@@ -265,15 +265,17 @@ start_replenishment
 # Restore resources 
 #####################################
 backup_images() {
-	cp -R $1 /tmp
-	echo "Backed up images before restore to /tmp"
+	CURRENT_DAY=`date +%y%m%d%H%M%S`
+	mkdir /tmp/$CURRENT_DAY
+	cp -R $1 /tmp/$CURRENT_DAY
+	echo "Backed up images before restore to /tmp/$CURRENT_DAY."
 }
 
 #####################################
 # Restore resources 
 #####################################
 restore_images() {
-	ARGS="Image target folder (enter y to use default /opt/tomcat/webapps/data )"
+	ARGS="Image target folder (enter y to use default /opt/tomcat/webapps/data ) !"
 	readvalue
 	if [ -z "$VALUE" ]; then
 		echo "Invalid $ARGS $VALUE. "
@@ -283,6 +285,12 @@ restore_images() {
 		VALUE="/opt/tomcat/webapps/data"
     fi
 	target=$VALUE
+	ARGS=" Do you want to continue y (Yes) / n (No) ?"
+	readvalue
+	if [ "$VALUE" != "y" ]; then
+	   echo "Mongodb restore process stopped by the user. "
+	   exit 0
+	fi
 	backup_images $target
 	rc=$?
 	if [ $rc -ne 0 ]; then
